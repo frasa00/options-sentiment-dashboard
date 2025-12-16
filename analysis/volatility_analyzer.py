@@ -1,85 +1,86 @@
 """
-Analizzatore volatilità
+volatility_analyzer.py - Esteso con analisi volatilità durante ribassi
 """
-
-import pandas as pd
-import numpy as np
-from datetime import datetime
-from typing import Dict, Optional
-import logging
-
-logger = logging.getLogger(__name__)
-
 class VolatilityAnalyzer:
-    """Analizzatore per volatilità"""
+    def __init__(self, vix_data, historical_vol):
+        self.vix_data = vix_data
+        self.historical_vol = historical_vol
     
-    def __init__(self, config: Optional[Dict] = None):
-        self.config = config or {}
-    
-    def calculate_volatility_metrics(self, options_data: Dict) -> Dict:
-        try:
-            all_options = options_data.get('all_options', pd.DataFrame())
-            current_price = options_data.get('current_price', 0)
-            
-            if all_options.empty or 'iv' not in all_options.columns:
-                return self._get_empty_vol_metrics()
-            
-            iv_series = all_options['iv'].dropna()
-            
-            if iv_series.empty:
-                return self._get_empty_vol_metrics()
-            
-            vix_index = self._calculate_vix_index(all_options, current_price)
-            
-            return {
-                'iv_mean': float(iv_series.mean()),
-                'iv_std': float(iv_series.std()),
-                'iv_min': float(iv_series.min()),
-                'iv_max': float(iv_series.max()),
-                'vix_index': vix_index,
-                'timestamp': datetime.now(),
-                'current_price': current_price,
-                'num_options': len(all_options)
-            }
-            
-        except Exception as e:
-            logger.error(f"❌ Errore calcolo volatilità: {e}")
-            return self._get_empty_vol_metrics()
-    
-    def _calculate_vix_index(self, options_df: pd.DataFrame, spot_price: float) -> float:
-        try:
-            otm_calls = options_df[(options_df['optionType'] == 'call') & 
-                                  (options_df['strike'] > spot_price)]
-            otm_puts = options_df[(options_df['optionType'] == 'put') & 
-                                 (options_df['strike'] < spot_price)]
-            
-            if otm_calls.empty or otm_puts.empty or 'iv' not in options_df.columns:
-                return 20.0
-            
-            otm_options = pd.concat([otm_calls, otm_puts])
-            weights = 1 / (abs(otm_options['strike'] / spot_price - 1) ** 2 + 0.01)
-            weights = weights / weights.sum()
-            
-            vix_value = (otm_options['iv'] * weights).sum() * 100
-            vix_value = max(5, min(vix_value, 100))
-            
-            return float(vix_value)
-        except:
-            return 20.0
-    
-    def _get_empty_vol_metrics(self) -> Dict:
+    def analyze_volatility_regime(self, market_return):
+        """
+        Analizza comportamento volatilità durante movimenti di mercato
+        
+        TUO punto: "Volatilità se mercato scende davvero la volatilità esplode"
+        """
+        vix_current = self.vix_data.get('current', 0)
+        vix_previous = self.vix_data.get('previous', 0)
+        vix_change = vix_current - vix_previous
+        
+        # Analisi regime volatilità
+        if market_return < -1.0:  # Ribasso forte > 1%
+            if vix_change > 3.0:  # VIX esplode
+                regime = "PANIC"
+                message = "🔴 VOLATILITÀ ESPLODE: Mercato in forte ribasso (-{:.1%}) e VIX +{:.1f} punti → Paura estrema".format(
+                    abs(market_return), vix_change
+                )
+            elif vix_change > 0:
+                regime = "FEAR"
+                message = "🟠 Paura in aumento durante ribasso"
+            else:
+                regime = "DIVERGENCE"
+                message = "🟡 Divergenza: Mercato scende ma VIX cala → Attenzione"
+        
+        elif market_return < -0.5:  # Ribasso moderato
+            if vix_change > 2.0:
+                regime = "CAUTION"
+                message = "🟠 Cautela: Ribasso moderato con VIX in aumento"
+            else:
+                regime = "NORMAL"
+                message = "🟢 Movimento normale"
+        
+        else:  # Mercato stabile o in rialzo
+            if vix_change > 2.0:
+                regime = "UNEXPECTED_FEAR"
+                message = "🟡 Paura inaspettata in mercato stabile/rialzista"
+            else:
+                regime = "CALM"
+                message = "🟢 Mercato calmo"
+        
         return {
-            'iv_mean': 0.2,
-            'iv_std': 0.05,
-            'iv_min': 0.15,
-            'iv_max': 0.25,
-            'vix_index': 20.0,
-            'timestamp': datetime.now(),
-            'current_price': 0,
-            'num_options': 0,
-            'error': True
+            'regime': regime,
+            'vix_current': vix_current,
+            'vix_change': vix_change,
+            'market_return': market_return,
+            'message': message,
+            'is_volatility_spiking': vix_change > 2.0 and market_return < -0.5
         }
-
-if __name__ == "__main__":
-    analyzer = VolatilityAnalyzer()
-    print("VolatilityAnalyzer pronto per l'uso")
+    
+    def get_volatility_metrics(self):
+        """Metriche complete volatilità"""
+        return {
+            'vix': self.vix_data.get('current', 0),
+            'vix_1d_change': self.vix_data.get('current', 0) - self.vix_data.get('previous', 0),
+            'vix_1w_change': self.vix_data.get('current', 0) - self.vix_data.get('week_ago', 0),
+            'term_structure': self._analyze_term_structure(),
+            'volatility_regime': self._get_regime_classification()
+        }
+    
+    def _analyze_term_structure(self):
+        """Analizza struttura temporale volatilità"""
+        # Implementa logica per contango/backwardation
+        return "Backwardation"  # o "Contango"
+    
+    def _get_regime_classification(self):
+        """Classifica regime volatilità"""
+        vix = self.vix_data.get('current', 0)
+        
+        if vix < 15:
+            return "COMPLACENCY"  # Compiacenza
+        elif vix < 20:
+            return "NORMAL"  # Normale
+        elif vix < 25:
+            return "CAUTIOUS"  # Cautela
+        elif vix < 30:
+            return "FEAR"  # Paura
+        else:
+            return "PANIC"  # Panico
