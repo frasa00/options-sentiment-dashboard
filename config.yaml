@@ -1,0 +1,128 @@
+# CONFIGURAZIONE PROGETTO OPZIONI + SENTIMENT
+# Configurato per frasa00 con fonti Telegram
+
+# 1. ASSET PRINCIPALI
+assets:
+  primary: "SPY"           # ETF S&P500 (principale)
+  secondaries:             # Altri asset da monitorare
+    - "QQQ"                # Nasdaq 100
+    - "IWM"                # Russell 2000
+    - "DIA"                # Dow Jones
+  watchlist:               # Watchlist personale - MODIFICA QUI!
+    - "AAPL"
+    - "MSFT"
+    - "TSLA"
+    - "NVDA"
+    - "AMZN"
+
+# 2. FONTI DATI OPZIONI
+data_sources:
+  options:
+    primary: "yfinance"    # yfinance o openbb
+    fallback: "yfinance"
+    update_interval: 300   # secondi (5 minuti)
+  
+  market_data:
+    update_interval: 60    # secondi (1 minuto)
+    save_history: true
+    history_days: 30
+
+# 3. SENTIMENT SOURCES - CONFIGURATO PER TE!
+sentiment_sources:
+  websites:
+    - name: "Reuters Markets"
+      url: "https://www.reuters.com/markets"
+      type: "news"
+      priority: 1
+    
+    - name: "Bloomberg Markets"
+      url: "https://www.bloomberg.com/markets"
+      type: "news"
+      priority: 1
+    
+    - name: "MarketWatch"
+      url: "https://www.marketwatch.com"
+      type: "news"
+      priority: 2
+  
+  # TUOI GRUPPI TELEGRAM - GIÀ INSERITI!
+  telegram_channels:
+    - name: "Giardino Della Tartaruga"
+      username: "@giardinodellatartaruga"
+      type: "trading"
+      priority: 1
+      enabled: true
+    
+    - name: "Marco Casario Official"
+      username: "@MarcoCasarioOfficial"
+      type: "analysis"
+      priority: 1
+      enabled: true
+  
+  rss_feeds:
+    - name: "Wall Street Journal"
+      url: "https://feeds.a.dj.com/rss/RSSMarketsMain.xml"
+      type: "news"
+    
+    - name: "Financial Times"
+      url: "https://www.ft.com/?format=rss"
+      type: "news"
+
+# 4. ANALISI PARAMETRI
+analysis:
+  skew:
+    lookback_days: 20
+    delta_points: [0.25, 0.10]  # 25Δ e 10Δ
+    smoothing_window: 5
+  
+  pcr:
+    volume_threshold: 1000
+    oi_threshold: 100
+    alert_threshold: 1.5  # PCR > 1.5 → alert
+  
+  volatility:
+    iv_percentile_days: 252  # 1 anno trading
+    term_structure_points: [7, 30, 60, 90]  # giorni
+  
+  sentiment:
+    update_interval: 900     # 15 minuti
+    history_days: 7
+    confidence_threshold: 0.7
+
+# 5. DASHBOARD SETTINGS
+dashboard:
+  port: 8501
+  theme: "dark"
+  auto_refresh: true
+  refresh_interval: 60      # secondi
+  
+  charts:
+    skew_chart_height: 500
+    sentiment_chart_height: 400
+    update_animation: true
+
+# 6. TRADING SIGNALS
+signals:
+  skew:
+    bearish_threshold: 0.02    # 2% skew negativo
+    bullish_threshold: -0.02   # 2% skew positivo
+  
+  pcr:
+    extreme_bearish: 1.5
+    extreme_bullish: 0.5
+  
+  sentiment:
+    extreme_bearish: -0.7
+    extreme_bullish: 0.7
+  
+  confirmation:
+    min_confirmations: 2       # Minimo 2 segnali concordanti
+    max_contradictions: 1      # Massimo 1 segnale contrario
+
+# 7. RISK MANAGEMENT
+risk:
+  max_position_size: 0.05      # 5% del capitale per trade
+  stop_loss_pct: 0.02          # 2% stop loss
+  take_profit_pct: 0.04        # 4% take profit
+  max_daily_trades: 3
+  correlation_threshold: 0.7
