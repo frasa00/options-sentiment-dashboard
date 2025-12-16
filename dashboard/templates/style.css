@@ -1,0 +1,44 @@
+/* Stili CSS personalizzati per la dashboard */
+
+/* Theme personalizzato */
+:root {
+    --primary-color: #1e88e5;
+    --secondary-color: #0d47a1;
+    --success-color: #4caf50;
+    --warning-color: #ff9800;
+    --danger-color: #f44336;
+    --dark-bg: #121212;
+    --card-bg: #1e1e1e;
+}
+
+/* Card stile */
+.metric-card {
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    padding: 15px;
+    margin: 10px 0;
+    border-left: 4px solid var(--primary-color);
+}
+
+/* Alert styles */
+.alert-success {
+    border-left-color: var(--success-color);
+    background-color: rgba(76, 175, 80, 0.1);
+}
+
+.alert-warning {
+    border-left-color: var(--warning-color);
+    background-color: rgba(255, 152, 0, 0.1);
+}
+
+.alert-danger {
+    border-left-color: var(--danger-color);
+    background-color: rgba(244, 67, 54, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .metric-card {
+        padding: 10px;
+    }
+}
