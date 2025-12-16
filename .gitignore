@@ -1,0 +1,56 @@
+<details>
+<summary>Clicca per vedere il contenuto di .gitignore</summary>
+
+```gitignore
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Dati sensibili
+.env
+*.key
+*.pem
+secrets.yaml
+config_private.yaml
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Ambiente virtuale
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Output esportazioni
+exports/*
+!exports/.gitkeep
+
+# Dati temporanei
+temp/
+tmp/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Streamlit
+.streamlit/
