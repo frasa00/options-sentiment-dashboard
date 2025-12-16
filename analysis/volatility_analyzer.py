@@ -53,4 +53,33 @@ class VolatilityAnalyzer:
             otm_puts = options_df[(options_df['optionType'] == 'put') & 
                                  (options_df['strike'] < spot_price)]
             
-            if otm_calls.empty or
+            if otm_calls.empty or otm_puts.empty or 'iv' not in options_df.columns:
+                return 20.0
+            
+            otm_options = pd.concat([otm_calls, otm_puts])
+            weights = 1 / (abs(otm_options['strike'] / spot_price - 1) ** 2 + 0.01)
+            weights = weights / weights.sum()
+            
+            vix_value = (otm_options['iv'] * weights).sum() * 100
+            vix_value = max(5, min(vix_value, 100))
+            
+            return float(vix_value)
+        except:
+            return 20.0
+    
+    def _get_empty_vol_metrics(self) -> Dict:
+        return {
+            'iv_mean': 0.2,
+            'iv_std': 0.05,
+            'iv_min': 0.15,
+            'iv_max': 0.25,
+            'vix_index': 20.0,
+            'timestamp': datetime.now(),
+            'current_price': 0,
+            'num_options': 0,
+            'error': True
+        }
+
+if __name__ == "__main__":
+    analyzer = VolatilityAnalyzer()
+    print("VolatilityAnalyzer pronto per l'uso")
